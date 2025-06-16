@@ -1,37 +1,30 @@
-import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { generateText } from 'ai';
+import { google } from '@ai-sdk/google';
+import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
 
-export const maxDuration = 30;
+const googleAI = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+});
 
 export async function POST(req: Request) {
-try {
-    // Your prompt string
-    const prompt = "Create a list of three open-ended and engaging questions formatted as a single string. Each question should be separated by '||'. These questions are for an anonymous social messaging platform, like Qooh.me, and should be suitable for a diverse audience. Avoid personal or sensitive topics, focusing instead on universal themes that encourage friendly interaction. For example, your output should be structured like this: 'What's a hobby you've recently started?||If you could have dinner with any historical figure, who would it be?||What's a simple thing that makes you happy?'. Ensure the questions are intriguing, foster curiosity, and contribute to a positive and welcoming conversational environment.";
-
-    // Wrap the prompt in a chat message format
-    const messages = [
-      {
-        role: "user",
-        content: prompt
-      }
-    ];
-  
-    const result = streamText({
-      model: openai('gpt-4o'),
-      messages:[],
+  try {
+    const prompt =
+      "Create a list of three open-ended and engaging questions formatted as a single string. Each question should be separated by '||'. These questions are for an anonymous social messaging platform, like Qooh.me, and should be suitable for a diverse audience. Avoid personal or sensitive topics, focusing instead on universal themes that encourage friendly interaction. For example, your output should be structured like this: 'What’s a hobby you’ve recently started?||If you could have dinner with any historical figure, who would it be?||What’s a simple thing that makes you happy?'. Ensure the questions are intriguing, foster curiosity, and contribute to a positive and welcoming conversational environment.";
+      const { text } = await generateText({
+        model: googleAI('gemini-2.0-flash-lite'),
+        prompt,
+        providerOptions: {
+          google: {
+            responseModalities: ['TEXT'],
+          } satisfies GoogleGenerativeAIProviderOptions,
+        },
     });
-  
-    return result.toDataStreamResponse();
+    let cleanedText = text.trim().replace(/^['"]|['"]$/g, '');
+    return NextResponse.json({ success: true, message: cleanedText }, { status: 200 });
+  } catch (error) {
+    console.error('An unexpected error occurred:', error);
+    return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
-  catch(error){
-    if (error instanceof OpenAI.APIError) {
-      const {name,status,headers,message} = error;
-      return NextResponse.json( { name,status,headers,message }, { status:500 } )
-    }else{
-      console.log("unexpected Error",error);
-      throw error;
-    }
-  }
-} 
+}

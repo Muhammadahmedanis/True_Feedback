@@ -1,9 +1,7 @@
 "use client"
 
 import { signInSchema } from '@/schemas/signInSchema';
-import { ApiResponse } from '@/types/apiResponse';
 import { zodResolver } from '@hookform/resolvers/zod';
-import axios, { AxiosError } from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -15,7 +13,6 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { Loader } from 'lucide-react';
 import { signIn } from 'next-auth/react';
-import { error } from 'console';
 
 export default function Signin() {
   const[isSubmitting, setIsSubmitting] = useState(false);
